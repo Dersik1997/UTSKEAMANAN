@@ -36,16 +36,16 @@ if (isset($_POST['kirim_pesanan'])) {
     }
 }
 
-// 2. Proses Login Admin
+// 2. Proses Login Admin (Kunci salah tetap masuk, namun data tetap terenkripsi)
 if (isset($_POST['masuk_admin'])) {
     $input_kunci = trim($_POST['kunci_simetris'] ?? '');
-    if (hash('sha256', $input_kunci) === VALID_KEY_HASH) {
+    if ($input_kunci !== '') {
         $_SESSION['login_simetris'] = true;
         $_SESSION['kunci_aktif'] = $input_kunci;
         header("Location: admin.php");
         exit;
     } else {
-        $pesan_error = "Kunci otorisasi admin tidak sesuai. Akses ditolak.";
+        $pesan_error = "Kunci otorisasi tidak boleh kosong.";
     }
 }
 ?>

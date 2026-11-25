@@ -43,30 +43,18 @@ if (isset($_POST['kirim_pesanan'])) {
     }
 }
 
-// 2. Proses Login Admin dengan Verifikasi Digital Signature Private Key
+// 2. Proses Login Admin (Private Key salah tetap masuk, namun data tetap terenkripsi)
 if (isset($_POST['masuk_admin'])) {
     $input_privKey = trim($_POST['private_key'] ?? '');
-    $pubKey = @file_get_contents(__DIR__ . '/public.pem');
-
-    if (!empty($input_privKey) && !empty($pubKey)) {
-        $challenge = "WARUNG_AUTH_" . bin2hex(random_bytes(8));
-        $privResource = @openssl_pkey_get_private($input_privKey);
-
-        if ($privResource && @openssl_sign($challenge, $signature, $privResource, OPENSSL_ALGO_SHA256)) {
-            if (@openssl_verify($challenge, $signature, $pubKey, OPENSSL_ALGO_SHA256) === 1) {
-                $_SESSION['login_asimetris'] = true;
-                $_SESSION['private_key_aktif'] = $input_privKey;
-                header("Location: admin.php");
-                exit;
-            }
-        }
-        $pesan_error = "Kunci otorisasi privat tidak cocok. Akses ke dashboard ditolak.";
+    if ($input_privKey !== '') {
+        $_SESSION['login_asimetris'] = true;
+        $_SESSION['private_key_aktif'] = $input_privKey;
+        header("Location: admin.php");
+        exit;
     } else {
         $pesan_error = "Kunci privat tidak boleh kosong.";
     }
 }
-
-$contoh_private_key = file_exists(__DIR__ . '/private.pem') ? file_get_contents(__DIR__ . '/private.pem') : '';
 ?>
 <!DOCTYPE html>
 <html lang="id" class="scroll-smooth">
@@ -441,16 +429,10 @@ $contoh_private_key = file_exists(__DIR__ . '/private.pem') ? file_get_contents(
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
                         <label class="text-xs font-bold uppercase tracking-wider text-slate-700">RSA Private Key (.pem)</label>
-                        <div class="flex items-center gap-2">
-                            <label for="upload_priv_file" class="cursor-pointer text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1">
-                                📁 Unggah File .pem
-                            </label>
-                            <input type="file" id="upload_priv_file" accept=".pem,.key,.txt" onchange="unggahFilePem(this)" class="hidden">
-                            <span class="text-slate-300">|</span>
-                            <button type="button" onclick="muatKunciOtoritas()" class="text-xs font-bold text-amber-700 hover:text-amber-800">
-                                🔑 Muat Kunci Server
-                            </button>
-                        </div>
+                        <label for="upload_priv_file" class="cursor-pointer text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1">
+                            📁 Unggah File .pem
+                        </label>
+                        <input type="file" id="upload_priv_file" accept=".pem,.key,.txt" onchange="unggahFilePem(this)" class="hidden">
                     </div>
                     <textarea id="input_priv" name="private_key" rows="5" placeholder="Tempel isi private.pem di sini (-----BEGIN PRIVATE KEY-----...)" required
                         class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-[11px] font-mono leading-relaxed transition"></textarea>
@@ -461,9 +443,6 @@ $contoh_private_key = file_exists(__DIR__ . '/private.pem') ? file_get_contents(
                     Verifikasi Kunci & Buka Dashboard &rarr;
                 </button>
             </form>
-
-            <!-- Kunci Otoritas Server -->
-            <textarea id="kunci_server_source" class="hidden"><?= htmlspecialchars($contoh_private_key) ?></textarea>
         </div>
     </div>
 
@@ -502,10 +481,6 @@ $contoh_private_key = file_exists(__DIR__ . '/private.pem') ? file_get_contents(
 
         function tutupModalAdmin() {
             document.getElementById('modalAdmin').classList.add('hidden');
-        }
-
-        function muatKunciOtoritas() {
-            document.getElementById('input_priv').value = document.getElementById('kunci_server_source').value;
         }
 
         function unggahFilePem(input) {

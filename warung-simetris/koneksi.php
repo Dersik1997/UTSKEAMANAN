@@ -66,6 +66,6 @@ function dekripsiSimetris($ciphertext, $key, $iv_base64) {
     $key_hash = hash('sha256', $key, true);
     $iv_raw = base64_decode($iv_base64);
     $decrypted = openssl_decrypt($ciphertext, $cipher, $key_hash, 0, $iv_raw);
-    return $decrypted !== false ? $decrypted : "[Kunci Salah / Gagal Dekripsi]";
+    return $decrypted !== false ? $decrypted : $ciphertext;
 }
 ?>

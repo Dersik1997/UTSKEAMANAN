@@ -122,18 +122,23 @@ function enkripsiAsimetris($plaintext) {
 // Fungsi Dekripsi Asimetris menggunakan Private Key: X = D(PR, Y)
 function dekripsiAsimetris($ciphertext_base64, $privKey) {
     if (empty($ciphertext_base64)) return '-';
+    if (empty($privKey)) return $ciphertext_base64;
+
+    $resPriv = @openssl_pkey_get_private($privKey);
+    if (!$resPriv) return $ciphertext_base64;
+
     $raw = base64_decode($ciphertext_base64);
-    if (!$raw) return '[Ciphertext Rusak/Bukan Base64]';
+    if (!$raw) return $ciphertext_base64;
 
     // Setiap blok RSA-2048 hasil enkripsi adalah 256 bytes
     $chunks = str_split($raw, 256);
     $plaintext = '';
     foreach ($chunks as $chunk) {
         $dec = '';
-        if (@openssl_private_decrypt($chunk, $dec, $privKey, OPENSSL_PKCS1_PADDING)) {
+        if (@openssl_private_decrypt($chunk, $dec, $resPriv, OPENSSL_PKCS1_PADDING)) {
             $plaintext .= $dec;
         } else {
-            return '[Private Key Tidak Cocok]';
+            return $ciphertext_base64;
         }
     }
     return $plaintext;
